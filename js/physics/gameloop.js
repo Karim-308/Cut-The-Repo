@@ -1,4 +1,4 @@
-import { init, clear, drawBg, circle, line, rope, img, loadImg, getSize, swipeSlash, bubble, candy as drawCandy } from './renderer.js';
+import { init, clear, drawBg, circle, line, rope, img, loadImg, getSize, swipeSlash, bubble, candy as drawCandy, screenToVirtual } from './renderer.js';
 import { frogIdleAnimatedSpriteCoords,
         frogAskingForFoodAnimatedSpriteCoords,
         frogEatingAnimatedSpriteCoords } from '../objects/frog.js';
@@ -345,17 +345,20 @@ export async function start(levelData) {
     lastT = performance.now();
     frameId = requestAnimationFrame(loop);
     isCandyEaten = false;
+    applyOrientationLock(); // pause immediately if started in portrait
     const canvas = document.getElementById('game-canvas');
 
     canvas.addEventListener('mousedown', (e) => {
-        checkForBubblePopOnClick(e.clientX, e.clientY);
+        const p = screenToVirtual(e.clientX, e.clientY);
+        checkForBubblePopOnClick(p.x, p.y);
         isDrawing = true;
-        swipePath = [{ x: e.clientX, y: e.clientY }];
+        swipePath = [{ x: p.x, y: p.y }];
     });
 
     canvas.addEventListener('mousemove', (e) => {
         if (isDrawing) {
-            swipePath.push({ x: e.clientX, y: e.clientY });
+            const p = screenToVirtual(e.clientX, e.clientY);
+            swipePath.push({ x: p.x, y: p.y });
             // Keep path short for performance
             if (swipePath.length > 20) swipePath.shift();
             checkSwipeCuts();
@@ -372,23 +375,44 @@ export async function start(levelData) {
         swipePath = [];
     });
 
-
+    // Touch: start must arm cutting (otherwise touchmove never fires cuts on phones).
+    canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const p = screenToVirtual(touch.clientX, touch.clientY);
+        checkForBubblePopOnClick(p.x, p.y);
+        isDrawing = true;
+        swipePath = [{ x: p.x, y: p.y }];
+    }, { passive: false });
 
     canvas.addEventListener('touchmove', (e) => {
         e.preventDefault();
         if (isDrawing) {
             const touch = e.touches[0];
-            swipePath.push({ x: touch.clientX, y: touch.clientY });
+            const p = screenToVirtual(touch.clientX, touch.clientY);
+            swipePath.push({ x: p.x, y: p.y });
             if (swipePath.length > 20) swipePath.shift();
             checkSwipeCuts();
         }
-    });
+    }, { passive: false });
 
     canvas.addEventListener('touchend', () => {
         isDrawing = false;
         swipePath = [];
     });
 }
+
+// Landscape lock: freeze gameplay while the portrait rotate-overlay is up,
+// so the candy can't fall (and lose the level) behind it. Matches the
+// same media query used in css/orientation.css.
+const _portraitMq = window.matchMedia('(orientation: portrait) and (max-width: 900px)');
+function applyOrientationLock() {
+    if (!running) return;
+    if (_portraitMq.matches) pause();
+    else resume();
+}
+if (_portraitMq.addEventListener) _portraitMq.addEventListener('change', applyOrientationLock);
+else if (_portraitMq.addListener) _portraitMq.addListener(applyOrientationLock);
 
 export function stop() {
     running = false;

@@ -75,6 +75,12 @@ function transitionToWonScreen(starsCollected) {
     statesScreenElement.style.transition = 'opacity 0.5s ease-in';
     statesScreenElement.style.opacity = '1';
     statesScreenElement.querySelector(".star-container").className = `star-container stars-${starsCollected}`;
+
+    // Show only the win message matching the stars earned (0-3).
+    const stars = Math.max(0, Math.min(3, starsCollected));
+    statesScreenElement.querySelectorAll('.state-win .win-msg').forEach(msg => {
+        msg.classList.toggle('active', Number(msg.dataset.stars) === stars);
+    });
 }
 
 function transitionToNextLevel() {

@@ -18,9 +18,19 @@
     <link rel="stylesheet" href="./css/media.css">
     <link rel="stylesheet" href="./css/all.min.css">
     <title>Cut The Rope</title>
+    <link rel="stylesheet" href="./css/orientation.css">
 </head>
 
 <body>
+    <!-- Landscape lock: shown only on portrait phones -->
+    <div class="rotate-overlay" aria-hidden="true">
+        <div class="rotate-overlay-content">
+            <i class="fa-solid fa-mobile-screen-button rotate-icon"></i>
+            <p>Please rotate your device</p>
+            <span>Cut the Rope plays best in landscape</span>
+        </div>
+    </div>
+
     <main class="main-screen">
         <div class="shadow-img">
             <img src="./images/shadow.png" alt="rotating shadow">
@@ -210,10 +220,10 @@
             </div>
             <div class="state-win">
                 <div class="state-content">
-                    <!-- <p class="zero-stars">passable!</p> -->
-                    <!-- <p class="one-star">not bad!</p> -->
-                    <p class="two-stars">pretty good!</p>
-                    <!-- <p class="three-stars">amazing!</p> -->
+                    <p class="win-msg" data-stars="0">you made it!</p>
+                    <p class="win-msg" data-stars="1">not bad!</p>
+                    <p class="win-msg" data-stars="2">pretty good!</p>
+                    <p class="win-msg" data-stars="3">excellent!</p>
                 </div>
                 <div class="star-container stars-2">
                     <div class="star star-1 "></div>
@@ -248,7 +258,7 @@
             <img src="./images/gamecomplete.jpg" alt="Complete">
         </div>
         <div class="complete-text">
-            <p>Press Enter to return to Home</p>
+            <p>Tap anywhere to return to Home</p>
         </div>
     </main>
 

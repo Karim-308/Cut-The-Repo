@@ -1,0 +1,55 @@
+/* ================================================ */
+/* Landscape lock — "rotate your device" overlay     */
+/* Shown only on portrait phones/small touch screens */
+/* ================================================ */
+
+.rotate-overlay {
+    display: none;
+}
+
+@media (orientation: portrait) and (max-width: 900px) {
+    .rotate-overlay {
+        display: flex;
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 24px;
+        background: radial-gradient(circle at center, #2a2a2a, #111);
+        color: #fff;
+        /* Block all interaction with the (paused) game underneath. */
+        touch-action: none;
+    }
+}
+
+.rotate-overlay-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    font-family: 'gooddogplain', sans-serif;
+}
+
+.rotate-icon {
+    font-size: clamp(56px, 18vw, 90px);
+    color: #ffd34d;
+    animation: rotateHint 2.4s ease-in-out infinite;
+}
+
+.rotate-overlay p {
+    margin: 0;
+    font-size: clamp(1.6rem, 8vw, 2.4rem);
+}
+
+.rotate-overlay span {
+    font-size: clamp(1rem, 4.5vw, 1.3rem);
+    opacity: 0.8;
+}
+
+@keyframes rotateHint {
+    0%, 35% { transform: rotate(0deg); }
+    55%, 80% { transform: rotate(-90deg); }
+    100% { transform: rotate(0deg); }
+}

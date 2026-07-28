@@ -1,41 +1,81 @@
 import { recalculatePositions } from './resize.js';
 
+// ── Fixed virtual/design resolution ─────────────────────────────
+// All game logic (positions, radii, physics) runs in this constant
+// coordinate space. The world is scaled UNIFORMLY to fit any screen
+// (letterbox / "contain"), so nothing ever distorts or breaks on
+// resize — only `scale`/`offset` change, never the game coordinates.
+// Change these two numbers to pick a different play-field aspect ratio.
+export const VIRTUAL_WIDTH = 1280;
+export const VIRTUAL_HEIGHT = 720;
+
 let cvs = null;
 let ctx = null;
+
+// Current screen->world mapping (recomputed on every layout/resize).
+let scale = 1;
+let offsetX = 0;
+let offsetY = 0;
 
 export function init() {
     cvs = document.getElementById('game-canvas');
     if (!cvs) return false;
     ctx = cvs.getContext('2d');
-    
-    cvs.width = window.innerWidth;
-    cvs.height = window.innerHeight;
 
+    layout();
     window.addEventListener('resize', resize);
     return true;
 }
 
+// Size the backing store to the real viewport (device pixels for
+// crispness) and compute the uniform contain-scale + centering offset.
+function layout() {
+    if (!cvs) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    cvs.width = Math.max(1, Math.round(window.innerWidth * dpr));
+    cvs.height = Math.max(1, Math.round(window.innerHeight * dpr));
+
+    scale = Math.min(cvs.width / VIRTUAL_WIDTH, cvs.height / VIRTUAL_HEIGHT);
+    offsetX = (cvs.width - VIRTUAL_WIDTH * scale) / 2;
+    offsetY = (cvs.height - VIRTUAL_HEIGHT * scale) / 2;
+}
+
 export function resize() {
     if (!cvs) return;
-    cvs.width = window.innerWidth;
-    cvs.height = window.innerHeight;
-
+    layout();
+    // Virtual size is constant, so this keeps objects exactly in place.
     recalculatePositions();
 }
 
+// Game logic always sees the constant virtual world size.
 export function getSize() {
-    return { w: cvs ? cvs.width : 0, h: cvs ? cvs.height : 0 };
+    return { w: cvs ? VIRTUAL_WIDTH : 0, h: cvs ? VIRTUAL_HEIGHT : 0 };
+}
+
+// Convert a pointer/touch position (viewport CSS px) into world coords,
+// inverting the contain-scale + centering used for drawing.
+export function screenToVirtual(clientX, clientY) {
+    if (!cvs) return { x: 0, y: 0 };
+    const rect = cvs.getBoundingClientRect();
+    if (!rect.width || !rect.height) return { x: 0, y: 0 };
+    const bx = (clientX - rect.left) * (cvs.width / rect.width);
+    const by = (clientY - rect.top) * (cvs.height / rect.height);
+    return { x: (bx - offsetX) / scale, y: (by - offsetY) / scale };
 }
 
 export function clear() {
     if (!ctx) return;
+    // Wipe the whole backing store in identity space...
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, cvs.width, cvs.height);
+    // ...then draw everything in virtual coords via the contain transform.
+    ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
 }
 
 export function drawBg(color = '#87CEEB') {
     if (!ctx) return;
     ctx.fillStyle = color;
-    ctx.fillRect(0, 0, cvs.width, cvs.height);
+    ctx.fillRect(0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
 }
 
 export function circle(x, y, r, color = '#FF6B6B') {
