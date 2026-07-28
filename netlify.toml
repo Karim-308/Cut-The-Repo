@@ -1,0 +1,26 @@
+# Static site — no build step. Publish the repo root as-is.
+[build]
+  publish = "."
+  command = ""
+
+# ES modules and media are served with correct MIME types by default,
+# but pin long-cache headers for static assets to keep the game snappy.
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Content-Type = "text/javascript; charset=utf-8"
+
+[[headers]]
+  for = "/images/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000"
+
+[[headers]]
+  for = "/audio/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000"
+
+[[headers]]
+  for = "/video/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000"
